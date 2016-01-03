@@ -21,4 +21,4 @@ Try commenting/uncommenting the various entries in the "value filters" list near
 
 Pull requests welcome :)
 
-![screenshot](https://github.com/xkr47/midi-filter.ceylonblob/master/screenshot.png)
+![screenshot](https://github.com/xkr47/midi-filter.ceylon/blob/master/screenshot.png)
