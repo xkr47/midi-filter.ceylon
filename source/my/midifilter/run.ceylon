@@ -39,11 +39,11 @@ Logger log = logger(`package`);
 
 // Filters
 
-interface Filter satisfies Receiver {
+shared interface Filter satisfies Receiver {
     shared formal variable Receiver next;
 }
 
-class AbstractFilter() satisfies Filter {
+shared class AbstractFilter() satisfies Filter {
     variable Receiver? _next = null;
     shared actual Receiver next {
         assert (exists n = _next);
@@ -57,77 +57,86 @@ class AbstractFilter() satisfies Filter {
     shared default actual void close() => next.close();
 }
 
-class AbstractTypedFilter() extends AbstractFilter() {
-    shared default actual void send(MidiMessage? midiMessage, Integer timeStamp) {
-
+shared class AbstractTypedFilter() extends AbstractFilter() {
+    shared default void sendShort(ShortMessage msg, Integer timeStamp) => super.send(msg, timeStamp);
+    shared default void sendSysex(SysexMessage msg, Integer timeStamp) => super.send(msg, timeStamp);
+    shared default void sendMeta(MetaMessage msg, Integer timeStamp) => super.send(msg, timeStamp);
+    shared default void sendUnknown(MidiMessage? msg, Integer timeStamp) => super.send(msg, timeStamp);
+    shared default actual void send(MidiMessage? msg, Integer timeStamp) {
+        switch(msg)
+        case(is ShortMessage) { sendShort(msg, timeStamp); }
+        case(is SysexMessage) { sendSysex(msg, timeStamp); }
+        case(is MetaMessage) { sendMeta(msg, timeStamp); }
+        else { sendUnknown(msg, timeStamp); }
     }
 }
 
-class Log(String prefix) extends AbstractFilter() {
+shared class Log(String prefix) extends AbstractTypedFilter() {
     object help extends ShortMessage() {
         shared Integer getLength(ShortMessage msg) => getDataLength(msg.status);
     }
-    shared actual void send(MidiMessage? msg, Integer timeStamp) {
-        /*
-        if (exists msg, msg.status != timingClock && msg.status != activeSensing) {
-            log.trace(prefix + ": ``timeStamp`` ``msg.status``");
+
+    shared actual void sendShort(ShortMessage msg, Integer timeStamp) {
+        variable Boolean skip = false;
+        String desc;
+        value status = msg.status;
+        if (status < #F0 && status >= #80) {
+            String cmd;
+            value command = msg.command;
+            if (command == noteOff) { cmd = "noteOff"; }
+            else if (command == noteOn) { cmd = "noteOn"; }
+            else if (command == polyPressure) { cmd = "polyPressure"; }
+            else if (command == controlChange) { cmd = "controlChange"; }
+            else if (command == programChange) { cmd = "programChange"; }
+            else if (command == channelPressure) { cmd = "channelPressure"; }
+            else if (command == pitchBend) { cmd = "pitchBend"; }
+            else { cmd = "unknown ``command``"; }
+            desc = "``cmd`` channel ``msg.channel``";
+        } else {
+            if (status == midiTimeCode) { desc = "midiTimeCode"; }
+            else if (status == songPositionPointer) { desc = "songPositionPointer"; }
+            else if (status == songSelect) { desc = "songSelect"; }
+            else if (status == tuneRequest) { desc = "tuneRequest"; }
+            else if (status == endOfExclusive) { desc = "endOfExclusive"; }
+            else if (status == timingClock) { desc = "timingClock"; skip = true; }
+            else if (status == start) { desc = "start"; }
+            else if (status == cont) { desc = "cont"; }
+            else if (status == stop) { desc = "stop"; }
+            else if (status == activeSensing) { desc = "activeSensing"; skip = true; }
+            else if (status == systemReset) { desc = "systemReset"; }
+            else { desc = "unknown ``status``"; }
         }
-         */
-        switch(msg)
-        case (null) {
-            log.trace(prefix + ": ``timeStamp`` NULL");
+        String args;
+        switch(help.getLength(msg))
+        case(0) {args = ""; }
+        case(1) {args = " " + msg.data1.string;}
+        case(2) {args = " " + msg.data1.string + ", " + msg.data2.string;}
+        else {args = "?";}
+        if (!skip) {
+            trace(timeStamp, "SHORT " + desc + args);
         }
-        case(is ShortMessage) {
-            variable Boolean skip = false;
-            String desc;
-            value status = msg.status;
-            if (status < #F0 && status >= #80) {
-                String cmd;
-                value command = msg.command;
-                if (command == noteOff) { cmd = "noteOff"; }
-                else if (command == noteOn) { cmd = "noteOn"; }
-                else if (command == polyPressure) { cmd = "polyPressure"; }
-                else if (command == controlChange) { cmd = "controlChange"; }
-                else if (command == programChange) { cmd = "programChange"; }
-                else if (command == channelPressure) { cmd = "channelPressure"; }
-                else if (command == pitchBend) { cmd = "pitchBend"; }
-                else { cmd = "unknown ``command``"; }
-                desc = "``cmd`` channel ``msg.channel``";
-            } else {
-                if (status == midiTimeCode) { desc = "midiTimeCode"; }
-                else if (status == songPositionPointer) { desc = "songPositionPointer"; }
-                else if (status == songSelect) { desc = "songSelect"; }
-                else if (status == tuneRequest) { desc = "tuneRequest"; }
-                else if (status == endOfExclusive) { desc = "endOfExclusive"; }
-                else if (status == timingClock) { desc = "timingClock"; skip = true; }
-                else if (status == start) { desc = "start"; }
-                else if (status == cont) { desc = "cont"; }
-                else if (status == stop) { desc = "stop"; }
-                else if (status == activeSensing) { desc = "activeSensing"; skip = true; }
-                else if (status == systemReset) { desc = "systemReset"; }
-                else { desc = "unknown ``status``"; }
-            }
-            String args;
-            switch(help.getLength(msg))
-            case(0) {args = ""; }
-            case(1) {args = " " + msg.data1.string;}
-            case(2) {args = " " + msg.data1.string + ", " + msg.data2.string;}
-            else {args = "?";}
-            if (!skip) {
-                log.trace(prefix + ": ``timeStamp`` SHORT " + desc + args);
-            }
-        }
-        case(is SysexMessage) {
-            log.trace(prefix + ": ``timeStamp`` SYSEX ``msg.status`` with ``msg.length - 1`` data bytes");
-        }
-        case(is MetaMessage) {
-            log.trace(prefix + ": ``timeStamp`` META type ``msg.type``");
-        }
-        else {
-            log.trace(prefix + ": ``timeStamp`` unknown " + msg.string);
-        }
-        super.send(msg, timeStamp);
+        super.sendShort(msg, timeStamp);
     }
+    shared actual void sendSysex(SysexMessage msg, Integer timeStamp) {
+        trace(timeStamp, "SYSEX ``msg.status`` with ``msg.length - 1`` data bytes");
+        super.sendSysex(msg, timeStamp);
+    }
+    shared actual void sendMeta(MetaMessage msg, Integer timeStamp) {
+        trace(timeStamp, "META type ``msg.type``");
+        super.sendMeta(msg, timeStamp);
+     }
+    shared actual void sendUnknown(MidiMessage? msg, Integer timeStamp) {
+        if (exists msg) {
+            trace(timeStamp, "UNKNOWN " + msg.string);
+        } else {
+            trace(timeStamp, "NULL");
+        }
+        super.sendUnknown(msg, timeStamp);
+     }
+
+     void trace(Integer timeStamp, String msg) {
+         log.trace(prefix + ": ``timeStamp`` ``msg``");
+     }
 }
 
 // main app
