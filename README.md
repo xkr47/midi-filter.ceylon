@@ -1,13 +1,13 @@
 # midi-filter.ceylon
 Simple MIDI-through filter implemented in the Ceylon language.
 
-Reads midi commands from the first MIDI IN device, filters them using selected filters and outputs the filtered commands to the first MIDI OUT device.
+Reads midi commands from the first MIDI IN device, filters them using selected filters and outputs the filtered commands to the first MIDI OUT device. The program also logs all input and all output commands.
 
 # Requirements
 
 An external MIDI-enabled keyboard with both MIDI IN and MIDI OUT e.g. capable of playback. Also you need to configure your keyboard to disable "Local Control" e.g. not to play back notes played on the piano, instead only play what comes from MIDI IN. Otherwise you will get duplicate tones.
 
-# Installation
+# Installation & running
 
 In Ubuntu e.g.
 
