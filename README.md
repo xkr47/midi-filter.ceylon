@@ -9,15 +9,16 @@ An external MIDI-enabled keyboard with both MIDI IN and MIDI OUT e.g. capable of
 
 # Installation & running
 
-In Ubuntu e.g.
+[Install Ceylon](http://ceylon-lang.org/download/) and then:
 
-    sudo apt-get install ceylon-1.2.0
     ceylon compile
     ceylon run --flat-classpath my.midifilter
 
 Then connect your midi cables to your keyboard and start playing :)
 
-Try commenting/uncommenting the various entries in the "value filters" list near the end of [run.ceylon](blob/master/source/my/midifilter/run.ceylon).
+You can also import the project in [Eclipse with Ceylon IDE](http://ceylon-lang.org/documentation/current/ide/install/) - the flat-classpath setting should be set automatically.
+
+Try commenting/uncommenting the various entries in the "value filters" list near the end of [run.ceylon](source/my/midifilter/run.ceylon).
 
 Pull requests welcome :)
 
