@@ -222,7 +222,8 @@ shared void run() {
             midiOut.open();
         }
     } catch (MidiUnavailableException e) {
-        log.error("Midi unavailable", e);
+        log.error("Midi unavailable");
+        printStackTrace(e);
         return;
     }
 
@@ -238,6 +239,7 @@ shared void run() {
         next = filter;
     }
     midiIn.transmitter.receiver = next;
+    log.info("Started");
     /*
      http://docs.oracle.com/javase/tutorial/sound/accessing-MIDI.html
      http://jsresources.org/faq_midi.html
