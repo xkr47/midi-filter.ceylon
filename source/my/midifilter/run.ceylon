@@ -124,7 +124,7 @@ shared class Log(String prefix) extends AbstractTypedFilter() {
     shared actual void sendMeta(MetaMessage msg, Integer timeStamp) {
         trace(timeStamp, "META type ``msg.type``");
         super.sendMeta(msg, timeStamp);
-     }
+    }
     shared actual void sendUnknown(MidiMessage? msg, Integer timeStamp) {
         if (exists msg) {
             trace(timeStamp, "UNKNOWN " + msg.string);
@@ -132,11 +132,44 @@ shared class Log(String prefix) extends AbstractTypedFilter() {
             trace(timeStamp, "NULL");
         }
         super.sendUnknown(msg, timeStamp);
-     }
+    }
 
-     void trace(Integer timeStamp, String msg) {
-         log.trace(prefix + ": ``timeStamp`` ``msg``");
-     }
+    void trace(Integer timeStamp, String msg) {
+        log.trace(prefix + ": ``timeStamp`` ``msg``");
+    }
+}
+
+class Reverse() extends AbstractTypedFilter() {
+    shared actual void sendShort(ShortMessage msg, Integer timeStamp) {
+        ShortMessage newMsg;
+        if (msg.command == noteOn || msg.command == noteOff) {
+            newMsg = ShortMessage(msg.command, msg.channel, 129 - msg.data1, msg.data2);
+        } else {
+            newMsg = msg;
+        }
+        super.sendShort(newMsg, timeStamp);
+    }
+}
+
+class BlinkaLillaStjärna() extends AbstractTypedFilter() {
+    value notes = [ 60, 60, 67, 67, 69, 69, 67, 65, 65, 64, 64, 62, 62, 60, 67, 67, 65, 65, 64, 64, 62, 67, 67, 65, 65, 64, 64, 62, 60, 60, 67, 67, 69, 69, 67, 65, 65, 64, 64, 62, 62, 60 ];
+    variable value onPos = 0;
+    variable value offPos = 0;
+    shared actual void sendShort(ShortMessage msg, Integer timeStamp) {
+        ShortMessage newMsg;
+        if (msg.command == noteOn && msg.data2 != 0) {
+            assert(exists note = notes[onPos++]);
+            if (onPos == notes.size) { onPos = 0; }
+            newMsg = ShortMessage(msg.command, msg.channel, note, msg.data2);
+        } else if ((msg.command == noteOn && msg.data2 == 0) || msg.command == noteOff) {
+            assert(exists note = notes[offPos++]);
+            if (offPos == notes.size) { offPos = 0; }
+            newMsg = ShortMessage(msg.command, msg.channel, note, msg.data2);
+        } else {
+            newMsg = msg;
+        }
+        super.sendShort(newMsg, timeStamp);
+    }
 }
 
 // main app
@@ -194,9 +227,10 @@ shared void run() {
     }
 
     value filters = [
-        Log("In"),
-        //Reverse(),
-        Log("Out")
+    Log("In "),
+    BlinkaLillaStjärna(), // Twinkle twinkle little star
+    //Reverse(),
+    Log("Out")
     ];
     variable value next = midiOut.receiver;
     for (filter in filters.reversed) {
