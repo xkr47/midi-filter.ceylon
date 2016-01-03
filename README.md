@@ -5,7 +5,7 @@ Reads midi commands from the first MIDI IN device, filters them using selected f
 
 # Requirements
 
-An external MIDI-enabled keyboard with both MIDI IN and MIDI OUT e.g. capable of playback. Also you need to configure your keyboard to disable "Local Control" e.g. not to play back notes played on the piano, instead only play what comes from MIDI IN. Otherwise you will get duplicate tones.
+An external MIDI-enabled keyboard with both MIDI IN and MIDI OUT e.g. capable of playback. Also you need to configure your keyboard to disable "Local Control" e.g. not to play back notes played on the keyboard, instead only play what comes from MIDI IN. Otherwise you will get duplicate tones.
 
 # Installation & running
 
