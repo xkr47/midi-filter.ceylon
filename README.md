@@ -17,6 +17,8 @@ In Ubuntu e.g.
 
 Then connect your midi cables to your keyboard and start playing :)
 
-Try commenting/uncommenting the various entries in the "value filters" list near the end of [run.ceylon](https://github.com/xkr47/midi-filter.ceylon/blob/master/source/my/midifilter/run.ceylon).
+Try commenting/uncommenting the various entries in the "value filters" list near the end of [run.ceylon](blob/master/source/my/midifilter/run.ceylon).
 
 Pull requests welcome :)
+
+![screenshot](https://github.com/xkr47/midi-filter.ceylonblob/master/screenshot.png)
