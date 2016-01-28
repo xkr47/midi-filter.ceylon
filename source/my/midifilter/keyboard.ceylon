@@ -72,6 +72,7 @@ void connectKeyboard(Receiver receiver) {
         variable value sendOnTwoChannels = false;
         variable value transpose = 0;
         value code2note = HashMap<Integer, Integer>();
+        variable value stickyPedal = false;
 
         shared actual void run() {
             value frame = JFrame("MIDI Keyboard");
@@ -86,6 +87,13 @@ void connectKeyboard(Receiver receiver) {
         shared actual void keyPressed(KeyEvent? keyEvent) => key(keyEvent, true);
         shared actual void keyReleased(KeyEvent? keyEvent) => key(keyEvent, false);
         shared actual void keyTyped(KeyEvent? keyEvent) {}
+
+        void send(Integer cmd, Integer data1, Integer data2 = 0) {
+            receiver.send(ShortMessage(cmd, 0, data1, data2), -1);
+            if (sendOnTwoChannels) {
+                receiver.send(ShortMessage(cmd, 1, data1, data2), -1);
+            }
+        }
 
         void key(KeyEvent? keyEvent, Boolean keyPressed) {
             if (!exists keyEvent) { return; }
@@ -105,17 +113,23 @@ void connectKeyboard(Receiver receiver) {
                     assert(exists n = code2note.remove(code));
                     note2 = n;
                 }
-                receiver.send(ShortMessage(keyPressed then noteOn else noteOff, 0, note2, keyPressed then 64 else 0), -1);
-                if (sendOnTwoChannels) {
-                    receiver.send(ShortMessage(keyPressed then noteOn else noteOff, 1, note2, keyPressed then 64 else 0), -1);
-                }
+                send(keyPressed then noteOn else noteOff, note2, keyPressed then 64 else 0);
             } else {
                 switch (code)
                 case (9) {
                     exit();
                 }
+                case (64) { // left alt
+                    if (keyPressed) {
+                        stickyPedal = !stickyPedal;
+                        send(controlChange, 64, stickyPedal then 127 else 0); // pedal
+                    }
+                }
                 case (65) { // space
-                    receiver.send(ShortMessage(controlChange, 1, 64, keyPressed then 127 else 0), -1); // pedal
+                    if (!stickyPedal || !keyPressed) {
+                        stickyPedal = false;
+                        send(controlChange, 64, keyPressed then 127 else 0); // pedal
+                    }
                 }
                 case (105) { // right ctrl
                     if (keyPressed) {
