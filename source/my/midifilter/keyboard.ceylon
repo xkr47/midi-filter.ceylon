@@ -1,6 +1,7 @@
 import ceylon.collection {
     HashSet,
-    HashMap
+    HashMap,
+    MutableMap
 }
 import ceylon.interop.java {
     javaClass
@@ -28,7 +29,7 @@ import java.lang.reflect {
 import javax.sound.midi {
     Receiver,
     ShortMessage {
-        controlChange = \iCONTROL_CHANGE,
+        controlChange=\iCONTROL_CHANGE,
         noteOff=\iNOTE_OFF,
         noteOn=\iNOTE_ON
     }
@@ -69,6 +70,8 @@ void connectKeyboard(Receiver receiver) {
         );
 
         variable value sendOnTwoChannels = false;
+        variable value transpose = 0;
+        value code2note = HashMap<Integer, Integer>();
 
         shared actual void run() {
             value frame = JFrame("MIDI Keyboard");
@@ -94,9 +97,17 @@ void connectKeyboard(Receiver receiver) {
             }
             value note = keys[code] ;
             if (exists note) {
-                receiver.send(ShortMessage(keyPressed then noteOn else noteOff, 0, note, keyPressed then 64 else 0), -1);
+                Integer note2;
+                if (keyPressed) {
+                    note2 = note + transpose;
+                    code2note.put(code, note2);
+                } else {
+                    assert(exists n = code2note.remove(code));
+                    note2 = n;
+                }
+                receiver.send(ShortMessage(keyPressed then noteOn else noteOff, 0, note2, keyPressed then 64 else 0), -1);
                 if (sendOnTwoChannels) {
-                    receiver.send(ShortMessage(keyPressed then noteOn else noteOff, 1, note, keyPressed then 64 else 0), -1);
+                    receiver.send(ShortMessage(keyPressed then noteOn else noteOff, 1, note2, keyPressed then 64 else 0), -1);
                 }
             } else {
                 switch (code)
@@ -110,6 +121,18 @@ void connectKeyboard(Receiver receiver) {
                     if (keyPressed) {
                         sendOnTwoChannels = !sendOnTwoChannels;
                         cprint("2chan ``sendOnTwoChannels``");
+                    }
+                }
+                case (82) { // KP -
+                    if (keyPressed) {
+                        ++transpose;
+                        print("transpose ``transpose``");
+                    }
+                }
+                case (86) { // KP +
+                    if (keyPressed) {
+                        --transpose;
+                        print("transpose ``transpose``");
                     }
                 }
                 else {
