@@ -233,13 +233,19 @@ shared void run() {
     //Reverse(),
     Log("Out")
     ];
-    variable value next = midiOut.receiver;
+    value midiOutReceiver = midiOut.receiver;
+    variable value next = midiOutReceiver;
     for (filter in filters.reversed) {
         filter.next = next;
         next = filter;
     }
     midiIn.transmitter.receiver = next;
-    log.info("Started");
+    log.info("Midi through filter started ");
+
+    value logKbd = Log("Kbd");
+    logKbd.next = midiOutReceiver;
+    connectKeyboard(logKbd);
+    log.info("Keyboard midi out started");
     /*
      http://docs.oracle.com/javase/tutorial/sound/accessing-MIDI.html
      http://jsresources.org/faq_midi.html
