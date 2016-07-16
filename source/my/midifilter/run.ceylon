@@ -229,7 +229,7 @@ shared void run() {
 
     value filters = [
     Log("In "),
-    BlinkaLillaStjärna(), // Twinkle twinkle little star
+    //BlinkaLillaStjärna(), // Twinkle twinkle little star
     //Reverse(),
     Log("Out")
     ];
