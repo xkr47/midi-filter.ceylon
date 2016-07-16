@@ -138,8 +138,11 @@ void connectKeyboard(Receiver receiver) {
                     note2 = note + transpose;
                     code2note.put(code, note2);
                 } else {
-                    assert(exists n = code2note.remove(code));
-                    note2 = n;
+                    if (exists n = code2note.remove(code)) {
+                        note2 = n;
+                    } else {
+                        return;
+                    }
                 }
                 send(keyPressed then noteOn else noteOff, note2, keyPressed then 64 else 0);
             } else {
